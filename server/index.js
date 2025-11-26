@@ -18,8 +18,27 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Serve uploaded images as static files
-app.use('/uploads', express.static('uploads'));
+// ✅ Serve uploaded images as static files with error handling
+const path = require('path');
+const fs = require('fs');
+
+// Custom middleware to handle missing files gracefully
+app.use('/uploads', (req, res, next) => {
+	const filePath = path.join(__dirname, 'uploads', req.path);
+
+	// Check if file exists
+	if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+		// File exists, continue to static file handler
+		next();
+	} else {
+		// File doesn't exist, log and return 404 without spamming logs
+		console.log(`⚠️  Missing file requested: /uploads${req.path}`);
+		res.status(404).json({
+			message: 'File not found',
+			path: `/uploads${req.path}`
+		});
+	}
+}, express.static(path.join(__dirname, 'uploads')));
 
 db.sequelize
 	.sync({ alter: true })

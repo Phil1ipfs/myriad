@@ -190,13 +190,18 @@ exports.getAllArticlesWithCounts = async (req, res) => {
 };
 
 exports.toggleLike = async (req, res) => {
-	const token = req.headers.authorization;
+	let token = req.headers.authorization;
 	const { article_id } = req.body;
 
 	if (!token || !article_id) {
 		return res
 			.status(400)
 			.json({ message: "Token and article_id are required" });
+	}
+
+	// Remove "Bearer " prefix if present
+	if (token.startsWith("Bearer ")) {
+		token = token.substring(7);
 	}
 
 	try {
@@ -253,12 +258,17 @@ exports.toggleLike = async (req, res) => {
 };
 
 exports.getAllArticlesWithCountsByUser = async (req, res) => {
-	const token = req.headers.authorization;
+	let token = req.headers.authorization;
 
 	if (!token) {
 		return res
 			.status(400)
 			.json({ message: "Token is required in the headers" });
+	}
+
+	// Remove "Bearer " prefix if present
+	if (token.startsWith("Bearer ")) {
+		token = token.substring(7);
 	}
 
 	try {

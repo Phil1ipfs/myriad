@@ -496,20 +496,31 @@ class _ClientArticlesState extends State<ClientArticles> {
     final token = prefs.getString('token');
     final articleId = articles[index]['article_id'];
 
+    print('🔑 Toggling like for article $articleId with token: ${token?.substring(0, 20)}...');
+
     final response = await http.post(
       Uri.parse('https://janna-server.onrender.com/api/articles/like'),
-      headers: {'Content-Type': 'application/json', 'Authorization': '$token'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ?? '',  // Server expects token directly without 'Bearer' prefix
+      },
       body: jsonEncode({'article_id': articleId}),
     );
+
+    print('📥 Like response: ${response.statusCode} - ${response.body}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
         liked[index] = data['liked'];
-        articles[index]['like_count'] =
-            (articles[index]['like_count'] ?? 0) + (data['liked'] ? 1 : -1);
+        // Handle like_count as either int or String
+        final currentCount = articles[index]['like_count'];
+        final count = (currentCount is int) ? currentCount : (int.tryParse(currentCount?.toString() ?? '0') ?? 0);
+        articles[index]['like_count'] = count + (data['liked'] ? 1 : -1);
       });
+      print('✅ Like toggled successfully: ${data['liked']}');
     } else {
+      print('❌ Failed to like article: ${response.body}');
       _showError('Failed to like article');
     }
   }
