@@ -46,6 +46,16 @@ exports.seedSpecializations = async (req, res) => {
   try {
     console.log("🔧 Starting to add medical specializations...");
 
+    // Map of old names to new names
+    const migrations = {
+      "General Medicine": "General Practitioner",
+      "Pediatrics": "Pediatrician",
+      "Psychiatry": "Psychiatrist",
+      "Cardiology": "Cardiologist",
+      "Dermatology": "Dermatologist",
+    };
+
+    // Complete list of specializations
     const specializations = [
       "General Practitioner",
       "Pediatrician",
@@ -62,12 +72,43 @@ exports.seedSpecializations = async (req, res) => {
     const results = {
       added: [],
       existing: [],
+      migrated: [],
       errors: [],
     };
 
+    // Step 1: Migrate old field names to new ones
+    for (const [oldName, newName] of Object.entries(migrations)) {
+      try {
+        const oldField = await Field.findOne({ where: { name: oldName } });
+        const newField = await Field.findOne({ where: { name: newName } });
+
+        if (oldField && !newField) {
+          // Update the old field to the new name
+          await oldField.update({ name: newName });
+          console.log(`🔄 Migrated "${oldName}" → "${newName}"`);
+          results.migrated.push({ from: oldName, to: newName });
+        } else if (oldField && newField) {
+          // Both exist - delete the old one if no doctors are using it
+          const Doctor = db.Doctor;
+          const doctorsUsingOld = await Doctor.count({ where: { field_id: oldField.field_id } });
+
+          if (doctorsUsingOld === 0) {
+            await oldField.destroy();
+            console.log(`🗑️  Deleted duplicate "${oldName}"`);
+            results.migrated.push({ from: oldName, to: newName, action: "deleted duplicate" });
+          } else {
+            console.log(`⚠️  Cannot delete "${oldName}" - ${doctorsUsingOld} doctors are using it`);
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Error migrating ${oldName}:`, error.message);
+        results.errors.push({ name: oldName, error: error.message });
+      }
+    }
+
+    // Step 2: Add missing specializations
     for (const name of specializations) {
       try {
-        // Check if specialization already exists
         const existing = await Field.findOne({ where: { name } });
 
         if (existing) {
