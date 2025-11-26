@@ -25,11 +25,11 @@ exports.createEvent = async (req, res) => {
 
 		const { title, date, time, description, location, status } = req.body;
 		
-		// ✅ Store relative path for serving via static files (e.g., /uploads/events/event-123456.jpg)
+		// ✅ Cloudinary returns full URL in req.file.path
 		let image = null;
 		if (req.file) {
-			image = `/uploads/events/${req.file.filename}`;
-			console.log("✅ Image path saved:", image);
+			image = req.file.path;
+			console.log("✅ Cloudinary image URL saved:", image);
 		} else {
 			console.log("⚠️ No image file received");
 		}

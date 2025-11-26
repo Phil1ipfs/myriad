@@ -3,9 +3,10 @@ const router = express.Router();
 
 // Import the controller
 const authController = require("../controllers/auth.controllers.js");
-const upload = require("../middleware/upload");
+const { uploadProfile, uploadValidId } = require("../config/cloudinary");
+
 // Define the route for creating a doctor
-router.post("/doctors", upload.single("valid_id"), authController.registerDoctor);
+router.post("/doctors", uploadValidId.single("valid_id"), authController.registerDoctor);
 router.post("/clients", authController.registerClient);
 router.post("/admins", authController.registerAdmin);
 router.post("/login", authController.login);
@@ -17,7 +18,7 @@ router.post("/verify-otp", authController.verifyOtp);
 router.put("/change-password", authController.changePassword);
 router.put(
 	"/change-profile-picture",
-	upload.single("image"),
+	uploadProfile.single("image"),
 	authController.changeProfilePicture
 );
 router.post("/forgot-password", authController.forgotPassword);

@@ -5,7 +5,7 @@ const multer = require("multer");
 
 // ✅ Make sure the filename is correct: "../controllers/event.controller.js"
 const eventController = require("../controllers/event.controllers");
-const upload = require("../middleware/upload");
+const { uploadEvent } = require("../config/cloudinary");
 
 // ✅ Multer error handling middleware
 const handleUploadError = (err, req, res, next) => {
@@ -32,7 +32,7 @@ const handleUploadError = (err, req, res, next) => {
 };
 
 // ✅ Routes
-router.post("/", upload.single("image"), handleUploadError, eventController.createEvent);
+router.post("/", uploadEvent.single("image"), handleUploadError, eventController.createEvent);
 router.get("/", eventController.getAllEvents);
 router.get("/stats/:year", eventController.getMonthlyEvents);
 router.get("/upcoming", eventController.getUpcomingEventsThisMonth);

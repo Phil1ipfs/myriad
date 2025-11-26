@@ -50,8 +50,8 @@ exports.registerDoctor = async (req, res) => {
 			password,
 		} = req.body;
 
-		// Get uploaded file path if exists
-		const validIdImagePath = req.file ? req.file.filename : null;
+		// Get uploaded file path if exists (Cloudinary returns full URL in req.file.path)
+		const validIdImagePath = req.file ? req.file.path : null;
 
 		// Validate password
 		const passwordError = validatePassword(password);
@@ -714,10 +714,8 @@ exports.changeProfilePicture = async (req, res) => {
 
 		const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-		// Convert file path to URL format
-		// req.file.filename is like "profile-123456789.jpg"
-		// We want to save "/uploads/profiles/profile-123456789.jpg" to access via static server
-		const profile_picture = `/uploads/profiles/${req.file.filename}`;
+		// Cloudinary returns the full URL in req.file.path
+		const profile_picture = req.file.path;
 
 		await User.update(
 			{ profile_picture },
