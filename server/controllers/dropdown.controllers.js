@@ -41,3 +41,64 @@ exports.getActiveDoctors = async (req, res) => {
       .json({ message: "Failed to fetch doctors", error: error.message });
   }
 };
+
+exports.seedSpecializations = async (req, res) => {
+  try {
+    console.log("🔧 Starting to add medical specializations...");
+
+    const specializations = [
+      "General Practitioner",
+      "Pediatrician",
+      "Obstetrician-Gynecologist",
+      "Dermatologist",
+      "Cardiologist",
+      "Ophthalmologist",
+      "Dentist",
+      "ENT Specialist",
+      "Psychiatrist",
+      "Gastroenterologist",
+    ];
+
+    const results = {
+      added: [],
+      existing: [],
+      errors: [],
+    };
+
+    for (const name of specializations) {
+      try {
+        // Check if specialization already exists
+        const existing = await Field.findOne({ where: { name } });
+
+        if (existing) {
+          console.log(`✓ ${name} already exists`);
+          results.existing.push(name);
+        } else {
+          await Field.create({
+            name,
+            type: "medical",
+            required: true,
+          });
+          console.log(`✅ Added ${name}`);
+          results.added.push(name);
+        }
+      } catch (error) {
+        console.error(`❌ Error adding ${name}:`, error.message);
+        results.errors.push({ name, error: error.message });
+      }
+    }
+
+    console.log("\n✅ Specialization seeding completed!");
+
+    res.status(200).json({
+      message: "Specialization seeding completed",
+      results,
+    });
+  } catch (error) {
+    console.error("❌ Error seeding specializations:", error);
+    res.status(500).json({
+      message: "Failed to seed specializations",
+      error: error.message,
+    });
+  }
+};

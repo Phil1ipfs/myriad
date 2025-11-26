@@ -160,8 +160,10 @@ class _DoctorArticlesState extends State<DoctorArticles> {
 
     if (response.statusCode == 201) {
       setState(() {
-        final currentCount = articles[index]['comment_count'] ?? 0;
-        articles[index]['comment_count'] = currentCount + 1;
+        // Handle comment_count as either int or String
+        final currentCount = articles[index]['comment_count'];
+        final count = (currentCount is int) ? currentCount : (int.tryParse(currentCount?.toString() ?? '0') ?? 0);
+        articles[index]['comment_count'] = count + 1;
         commentControllers[index].clear();
         commented[index] = false;
       });
@@ -192,7 +194,7 @@ class _DoctorArticlesState extends State<DoctorArticles> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
-          "Doctor Dashboard",
+          "Articles",
           style: TextStyle(
             fontFamily: 'Sahitya',
             fontWeight: FontWeight.w700,
