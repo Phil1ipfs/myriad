@@ -8,13 +8,36 @@ class EventService {
 
   // 🗑️ Delete event
   static Future<bool> deleteEvent(int eventId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
     final uri = Uri.parse('$baseUrl/events/$eventId');
+
+    print('🗑️ Deleting event $eventId');
+    print('   Token: ${token?.substring(0, 20)}...');
+
     try {
-      final response = await http.delete(uri);
-      if (response.statusCode == 200) return true;
+      final response = await http.delete(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('📥 Delete response: ${response.statusCode}');
+      print('📥 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        print('✅ Event deleted successfully');
+        return true;
+      }
+
       final data = json.decode(response.body);
+      print('❌ Delete failed: ${data['message']}');
       throw Exception(data['message'] ?? 'Failed to delete event');
     } catch (e) {
+      print('❌ Error deleting event: $e');
       throw Exception('Error deleting event: $e');
     }
   }

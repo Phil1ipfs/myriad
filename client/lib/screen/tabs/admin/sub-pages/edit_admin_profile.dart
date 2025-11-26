@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -251,9 +252,29 @@ class _EditAdminProfileState extends State<EditAdminProfile> {
       keyboardType: keyboardType,
       decoration: _inputDecoration(label, icon),
       style: const TextStyle(fontFamily: 'Poppins'),
-      validator: isRequired
-          ? (value) => value!.isEmpty ? '$label is required' : null
+      inputFormatters: label == 'Contact Number'
+          ? [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(12),
+            ]
           : null,
+      validator: (value) {
+        if (isRequired && (value == null || value.isEmpty)) {
+          return '$label is required';
+        }
+
+        // Special validation for Contact Number (must be exactly 12 digits)
+        if (label == 'Contact Number' && value != null && value.isNotEmpty) {
+          if (value.length != 12) {
+            return 'Contact number must be exactly 12 digits';
+          }
+          if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+            return 'Contact number must contain only numbers';
+          }
+        }
+
+        return null;
+      },
     );
   }
 

@@ -91,6 +91,8 @@ exports.deleteEvent = async (req, res) => {
 	try {
 		const { event_id } = req.params;
 
+		console.log("🗑️ Delete event request received for event ID:", event_id);
+
 		if (!event_id) {
 			return res.status(400).json({ message: "Event ID is required." });
 		}
@@ -99,26 +101,43 @@ exports.deleteEvent = async (req, res) => {
 		const event = await Event.findByPk(event_id);
 
 		if (!event) {
+			console.log("❌ Event not found:", event_id);
 			return res.status(404).json({ message: "Event not found." });
 		}
 
+		console.log("✅ Event found:", event.title);
+
+		// Delete related EventRegister records first (important for foreign key constraints)
+		console.log("🗑️ Deleting event registrations...");
+		await EventRegister.destroy({ where: { event_id } });
+
 		// Delete related EventInterest records (optional)
+		console.log("🗑️ Deleting event interests...");
 		await EventInterest.destroy({ where: { event_id } });
 
-		// Delete related Notifications (optional)
+		// Delete related Notifications
+		console.log("🗑️ Deleting notifications...");
 		await Notification.destroy({
 			where: { related_id: event_id, type: "new_event" },
 		});
 
 		// Delete the event itself
+		console.log("🗑️ Deleting event...");
 		await Event.destroy({ where: { event_id } });
+
+		console.log("✅ Event deleted successfully:", event.title);
 
 		res.status(200).json({
 			message: `Event "${event.title}" has been deleted successfully.`,
 		});
 	} catch (error) {
-		console.error("Error deleting event:", error);
-		res.status(500).json({ message: "Internal server error." });
+		console.error("❌ Error deleting event:", error);
+		console.error("Error details:", error.message);
+		console.error("Stack trace:", error.stack);
+		res.status(500).json({
+			message: "Internal server error.",
+			error: error.message
+		});
 	}
 };
 
